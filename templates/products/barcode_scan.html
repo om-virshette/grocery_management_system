@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Barcode Scanner{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h4 class="mb-0"><i class="fas fa-barcode"></i> Barcode Scanner</h4>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="barcodeInput" class="form-label">Scan Barcode</label>
+                    <input type="text" class="form-control" id="barcodeInput" 
+                           placeholder="Enter or scan barcode" autofocus>
+                </div>
+                <button id="scanBtn" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Scan
+                </button>
+            </div>
+            <div class="col-md-6">
+                <div id="productInfo" class="card" style="display: none;">
+                    <div class="card-body">
+                        <h5 id="productName" class="card-title"></h5>
+                        <p class="card-text">
+                            Price: $<span id="productPrice"></span><br>
+                            Stock: <span id="productStock"></span>
+                        </p>
+                        <a id="productLink" href="#" class="btn btn-primary">
+                            <i class="fas fa-eye"></i> View Product
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const barcodeInput = document.getElementById('barcodeInput');
+    const scanBtn = document.getElementById('scanBtn');
+    const productInfo = document.getElementById('productInfo');
+    
+    function handleScan() {
+        const barcode = barcodeInput.value.trim();
+        if (!barcode) return;
+        
+        fetch('{% url "products:barcode_scan" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: `barcode=${encodeURIComponent(barcode)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('productName').textContent = data.product.name;
+                document.getElementById('productPrice').textContent = data.product.price;
+                document.getElementById('productStock').textContent = data.product.stock;
+                document.getElementById('productLink').href = `/products/${data.product.id}/`;
+                productInfo.style.display = 'block';
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Scan failed');
+        });
+    }
+    
+    scanBtn.addEventListener('click', handleScan);
+    barcodeInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') handleScan();
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"><i class="fas fa-star"></i> {{ title }}</h4>
+            <div>
+                <a href="{% url 'reports:export_product_csv' %}?type=performance" 
+                   class="btn btn-light btn-sm">
+                    <i class="fas fa-file-export"></i> Export CSV
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Units Sold</th>
+                        <th>Total Revenue</th>
+                        <th>Avg. Price</th>
+                        <th>Current Stock</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'products:product_detail' product.id %}">
+                                {{ product.name }}
+                            </a>
+                        </td>
+                        <td>{{ product.category|default:"-" }}</td>
+                        <td>{{ product.total_sold|default:0 }}</td>
+                        <td>${{ product.total_revenue|default:0|floatformat:2 }}</td>
+                        <td>
+                            {% if product.total_sold %}
+                                ${{ product.total_revenue|div:product.total_sold|floatformat:2 }}
+                            {% else %}
+                                $0.00
+                            {% endif %}
+                        </td>
+                        <td>{{ product.stock }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            No product performance data available
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-{% if 'Low Performing' in title %}danger{% else %}primary{% endif %} text-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="fas {% if 'Low Performing' in title %}fa-exclamation-circle{% else %}fa-star{% endif %}"></i> 
+                {{ title }}
+            </h4>
+            <div>
+                <a href="{% url 'reports:export_product_csv' %}?type={% if 'Top' in title %}top{% elif 'Low' in title %}low{% else %}performance{% endif %}" 
+                   class="btn btn-light btn-sm">
+                    <i class="fas fa-file-export"></i> Export CSV
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if 'Low Performing' in title %}
+        <div class="alert alert-danger">
+            These products have the lowest sales performance. Consider promotions or discontinuation.
+        </div>
+        {% endif %}
+        
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Units Sold</th>
+                        <th>Total Revenue</th>
+                        <th>Avg. Price</th>
+                        <th>Current Stock</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr class="{% if 'Low Performing' in title and product.total_sold == 0 %}table-danger{% endif %}">
+                        <td>
+                            <a href="{% url 'products:product_detail' product.id %}">
+                                {{ product.name }}
+                            </a>
+                        </td>
+                        <td>{{ product.category|default:"-" }}</td>
+                        <td>{{ product.total_sold|default:0 }}</td>
+                        <td>${{ product.total_revenue|default:0|floatformat:2 }}</td>
+                        <td>
+                            {% if product.total_sold %}
+                                ${{ product.total_revenue|div:product.total_sold|floatformat:2 }}
+                            {% else %}
+                                $0.00
+                            {% endif %}
+                        </td>
+                        <td>{{ product.stock }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            No product performance data available
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
