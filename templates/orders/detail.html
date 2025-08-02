@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Order #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"><i class="fas fa-receipt"></i> Order #{{ order.order_number }}</h4>
+            <div>
+                <a href="{% url 'orders:generate_invoice_pdf' order.id %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-file-pdf"></i> Download Invoice
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h5>Customer Information</h5>
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-1"><strong>Name:</strong> {{ order.customer_name }}</p>
+                        <p class="mb-1"><strong>Phone:</strong> {{ order.customer_phone }}</p>
+                        {% if order.customer_email %}
+                        <p class="mb-1"><strong>Email:</strong> {{ order.customer_email }}</p>
+                        {% endif %}
+                        {% if order.customer_address %}
+                        <p class="mb-1"><strong>Address:</strong> {{ order.customer_address }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h5>Order Information</h5>
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-1"><strong>Date:</strong> {{ order.created_at|date:"F j, Y H:i" }}</p>
+                        <p class="mb-1"><strong>Status:</strong> 
+                            <span class="badge bg-{% if order.status == 'completed' %}success{% elif order.status == 'pending' %}warning{% else %}danger{% endif %}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </p>
+                        <p class="mb-1"><strong>Created by:</strong> {{ order.created_by.username }}</p>
+                        {% if order.notes %}
+                        <p class="mb-1"><strong>Notes:</strong> {{ order.notes }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h5>Order Items</h5>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'products:product_detail' item.product.id %}">
+                                {{ item.product.name }}
+                            </a>
+                        </td>
+                        <td>₹{{ item.price }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>₹{{ item.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-secondary">
+                    <tr>
+                        <th colspan="3" class="text-end">Subtotal:</th>
+                        <th>₹{{ order.total_amount }}</th>
+                    </tr>
+                    <tr>
+                        <th colspan="3" class="text-end">Tax:</th>
+                        <th>₹0.00</th> {# Update with your tax calculation if needed #}
+                    </tr>
+                    <tr>
+                        <th colspan="3" class="text-end">Total:</th>
+                        <th>₹{{ order.total_amount }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'orders:order_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Orders
+            </a>
+            <div>
+                {% if order.status == 'pending' %}
+                <a href="{% url 'orders:order_complete' order.id %}" class="btn btn-success me-2">
+                    <i class="fas fa-check"></i> Mark as Completed
+                </a>
+                <a href="{% url 'orders:order_cancel' order.id %}" class="btn btn-danger">
+                    <i class="fas fa-times"></i> Cancel Order
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
